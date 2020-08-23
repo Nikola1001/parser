@@ -1,10 +1,13 @@
 import requests
 from bs4 import BeautifulSoup
+import csv
+import os
 
 URL = 'https://auto.ria.com/newauto/marka-jeep/'
 #URL = 'https://auto.ria.com/newauto/marka-lifan/'
 HEADERS = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36', 'accept': '*/*'} #Заголовки защита от ботов
 HOST='https://auto.ria.com'
+FILE = 'cars.csv'
 
 def get_html(url, params=None):
     r = requests.get(url, headers= HEADERS, params=params)
@@ -36,7 +39,17 @@ def get_content(html):
         })
     return cars
 
+def save_file(items, path):
+    with open(path, 'w', newline='') as file:
+        writer = csv.writer(file, delimiter=';')
+        writer.writerow(['Марка', 'Ссылка', 'Цена', 'Город'])
+        for item in items:
+            writer.writerow([item['title'], item['link'], item['price'], item['city']])
+
+
 def parse():
+    URL = input('Введите URL: ')
+    URL = URL.strip()
     html = get_html(URL)
     if html.status_code == 200:
         cars=[]
@@ -46,8 +59,9 @@ def parse():
             print(f'Парсинг страницы {page} из {pages_count}...')
             html = get_html(URL, params={'page': page})
             cars.extend(get_content(html.text))
-        print(cars)
+        save_file(cars, FILE)
         print(f'Получено {len(cars)} автомобилей')
+        os.startfile(FILE)
     else:
         print('Error')
         print(html)
